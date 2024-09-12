@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
@@ -8,7 +7,7 @@ import joblib
 import os
 
 # Load the dataset
-@st.cache  # Cache the dataset loading to improve performance
+@st.cache
 def load_data():
     data = pd.read_csv("spotify_songs.csv")
     return data
@@ -21,10 +20,20 @@ filtered_data = data[['track_name', 'playlist_subgenre', 'energy', 'valence', 't
 filtered_data = filtered_data.dropna(subset=['track_name', 'track_artist'])
 filtered_data['track_name'] = filtered_data['track_name'].astype(str)
 
-# Scale energy and valence
+# One-hot encode playlist_subgenre
+data_encoded = pd.get_dummies(filtered_data['playlist_subgenre'])
+
+# Scale energy and valence using StandardScaler
 scaler = StandardScaler()
 filtered_data.loc[:, 'energy'] = scaler.fit_transform(filtered_data[['energy']])
 filtered_data.loc[:, 'valence'] = scaler.fit_transform(filtered_data[['valence']])
+
+# Combine encoded genres with scaled energy and valence into a features DataFrame
+features = pd.concat([data_encoded, filtered_data[['energy', 'valence']]], axis=1)
+
+# Initialize the Nearest Neighbors model
+knn = NearestNeighbors(n_neighbors=10, metric='euclidean')
+knn.fit(features)
 
 # Function to save the 10 latest recommendations
 def save_recommendations(recommendations, file_name="recommendations.pkl"):
@@ -116,3 +125,4 @@ if st.button("Recommend Songs"):
 # Save filtered data
 filtered_data.to_csv('filtered_spotify_songs.csv', index=False)
 st.write("Filtered data has been saved as 'filtered_spotify_songs.csv'")
+
