@@ -97,11 +97,11 @@ def top_songs_by_mood(filtered_data):
 
     st.write("Top 5 Happy Songs:")
     for index, row in top_happy_songs.iterrows():
-        st.write(f"'{row['track_name']}' by {row['track_artist']} (Valence: {row['valence']}, Energy: {row['energy']})")
+        st.write(f"'{row['track_name']}' by {row['track_artist']}")
 
     st.write("\nTop 5 Sad Songs:")
     for index, row in top_sad_songs.iterrows():
-        st.write(f"'{row['track_name']}' by {row['track_artist']} (Valence: {row['valence']}, Energy: {row['energy']})")
+        st.write(f"'{row['track_name']}' by {row['track_artist']}")
 
 # Streamlit UI
 
