@@ -16,7 +16,7 @@ def load_data():
 data = load_data()
 
 # Select required columns
-filtered_data = data[['track_name', 'playlist_subgenre', 'energy', 'valence', 'track_artist']]
+filtered_data = data[['track_name', 'playlist_subgenre', 'energy', 'valence', 'track_artist', 'track_album_release_date']]
 filtered_data = filtered_data.dropna(subset=['track_name', 'track_artist'])
 filtered_data['track_name'] = filtered_data['track_name'].astype(str)
 
@@ -34,6 +34,26 @@ features = pd.concat([data_encoded, filtered_data[['energy', 'valence']]], axis=
 # Initialize the Nearest Neighbors model
 knn = NearestNeighbors(n_neighbors=10, metric='euclidean')
 knn.fit(features)
+
+# Function to display top 10 latest songs based on release date
+def top_latest_songs(filtered_data):
+    # Ensure the release date is in datetime format
+    filtered_data['track_album_release_date'] = pd.to_datetime(filtered_data['track_album_release_date'], errors='coerce')
+    
+    # Drop any rows where the date couldn't be converted
+    filtered_data = filtered_data.dropna(subset=['track_album_release_date'])
+    
+    # Sort by the release date in descending order (latest first)
+    latest_songs = filtered_data.sort_values(by='track_album_release_date', ascending=False).head(10)
+
+    st.write("Top 10 Latest Songs:")
+    for index, row in latest_songs.iterrows():
+        st.write(f"'{row['track_name']}' by {row['track_artist']} (Released on {row['track_album_release_date'].date()})")
+
+# Streamlit UI to display the top 10 latest songs
+if st.button("Show Top 10 Latest Songs"):
+    top_latest_songs(filtered_data)
+
 
 # Function to save the 10 latest recommendations
 def save_recommendations(recommendations, file_name="recommendations.pkl"):
