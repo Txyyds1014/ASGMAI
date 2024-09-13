@@ -1,111 +1,106 @@
+# Imports
 import streamlit as st
+import time
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler
+from youtubesearchpython import VideosSearch
 import difflib
 import joblib
 import os
 
 # Load the dataset
-@st.cache
-def load_data():
-    data = pd.read_csv("spotify_songs.csv")
-    return data
+data = pd.read_csv("spotify_songs.csv")
 
-# Load data
-data = load_data()
+# Select only the required columns
+filtered_data = data[['track_name', 'playlist_subgenre', 'valence', 'energy', 'track_artist']]
 
-# Select required columns
-filtered_data = data[['track_name', 'playlist_subgenre', 'energy', 'valence', 'track_artist', 'track_album_release_date']]
+# Drop rows where 'track_name' or 'track_artist' is NaN
 filtered_data = filtered_data.dropna(subset=['track_name', 'track_artist'])
-filtered_data['track_name'] = filtered_data['track_name'].astype(str)
+filtered_data['track_name'] = filtered_data['track_name'].astype(str)  # Ensure all track names are strings
 
-# One-hot encode playlist_subgenre
+# Convert 'playlist_subgenre' to numeric using one-hot encoding
 data_encoded = pd.get_dummies(filtered_data['playlist_subgenre'])
 
-# Scale energy and valence using StandardScaler
+# Scale 'valence' and 'energy'
 scaler = StandardScaler()
-filtered_data.loc[:, 'energy'] = scaler.fit_transform(filtered_data[['energy']])
 filtered_data.loc[:, 'valence'] = scaler.fit_transform(filtered_data[['valence']])
+filtered_data.loc[:, 'energy'] = scaler.fit_transform(filtered_data[['energy']])
 
-# Combine encoded genres with scaled energy and valence into a features DataFrame
-features = pd.concat([data_encoded, filtered_data[['energy', 'valence']]], axis=1)
+# Combine encoded and scaled features
+features = pd.concat([data_encoded, filtered_data[['valence', 'energy']]], axis=1)
 
-# Initialize the Nearest Neighbors model
+# Train the k-nearest neighbors model
 knn = NearestNeighbors(n_neighbors=10, metric='euclidean')
 knn.fit(features)
 
-# Function to display top 10 latest songs based on release date
-def top_latest_songs(filtered_data):
-    # Ensure the release date is in datetime format
-    filtered_data['track_album_release_date'] = pd.to_datetime(filtered_data['track_album_release_date'], errors='coerce')
-    
-    # Drop any rows where the date couldn't be converted
-    filtered_data = filtered_data.dropna(subset=['track_album_release_date'])
-    
-    # Sort by the release date in descending order (latest first)
-    latest_songs = filtered_data.sort_values(by='track_album_release_date', ascending=False).head(10)
-
-    st.write("Top 10 Latest Songs:")
-    for index, row in latest_songs.iterrows():
-        st.write(f"'{row['track_name']}' by {row['track_artist']} (Released on {row['track_album_release_date'].date()})")
-
-# Streamlit UI to display the top 10 latest songs
-if st.button("Show Top 10 Latest Songs"):
-    top_latest_songs(filtered_data)
-
-
-# Function to save the 10 latest recommendations
-def save_recommendations(recommendations, file_name="recommendations.pkl"):
-    if os.path.exists(file_name):
-        existing_recommendations = joblib.load(file_name)
-        recommendations = list(existing_recommendations) + list(recommendations)
-    recommendations = list(recommendations)[-10:]
-    joblib.dump(recommendations, file_name)
-
-# Function to load and display the latest 10 saved recommendations
-def display_saved_recommendations(file_name="recommendations.pkl"):
-    if os.path.exists(file_name):
-        saved_recommendations = joblib.load(file_name)
-        if saved_recommendations:
-            st.write("Latest 10 Recommended Songs:")
-            for song, artist in saved_recommendations:
-                st.write(f"'{song}' by {artist}")
-        else:
-            st.write("No previous recommendations found.")
+# Function to find the closest matching song using fuzzy matching
+def find_closest_song(song_name, song_list):
+    closest_match = difflib.get_close_matches(song_name, song_list, n=1, cutoff=0.6)  # 60% similarity cutoff
+    if closest_match:
+        return closest_match[0]
     else:
-        st.write("No previous recommendations found.")
+        return None
 
-# Function to recommend 5 songs based on song and artist name
+# Function to search YouTube for a song and return the first video link
+def get_youtube_link(song_name, artist_name):
+    search_query = f"{song_name} {artist_name} official"
+    videos_search = VideosSearch(search_query, limit=1)
+    result = videos_search.result()
+    
+    if result['result']:
+        return result['result'][0]['link']  # Return the first YouTube video link
+    else:
+        return None
+
+# Song recommendation function (recommend only 5 songs)
 def recommend_song(song_name, artist_name):
+    # Find the closest matching song and artist in the dataset
     closest_song_row = filtered_data[
         (filtered_data['track_name'].str.contains(song_name, case=False)) &
         (filtered_data['track_artist'].str.contains(artist_name, case=False))
     ]
     
     if closest_song_row.empty:
-        st.write(f"No close match found for '{song_name}' by '{artist_name}' in the dataset.")
+        st.error("No similar songs in the database.")
         return
     else:
+        # Extract the closest match details
         closest_song = closest_song_row['track_name'].values[0]
         closest_artist = closest_song_row['track_artist'].values[0]
-        st.write(f"Closest match found: '{closest_song}' by {closest_artist}\n")
+        st.success(f"Closest match found: '**{closest_song}**' by **{closest_artist}**")
     
+    # Extract the features of the closest matching song
     input_features = features[filtered_data['track_name'] == closest_song]
+    
+    # Find the nearest neighbors
     distances, indices = knn.kneighbors(input_features)
     
+    # Retrieve the recommended songs and artists, excluding the input song
     recommendations = filtered_data.iloc[indices[0]][['track_name', 'track_artist']].values
-    st.write(f"Songs similar to '{closest_song}' by {closest_artist}:")
+    with st.spinner('Recommending...'):
+        time.sleep(3)
     
-    recommended_songs = set()
-    for rec in recommendations[:5]:
+    st.subheader(f"Songs similar to '**{closest_song}**' by **{closest_artist}**:")
+    st.divider()
+    
+    recommended_songs = set()  # Use a set to avoid duplicates
+    count = 0  # Limit to 5 recommendations
+    for rec in recommendations:
+        if count >= 5:
+            break
         song, artist = rec
         if song != closest_song and (song, artist) not in recommended_songs:
             recommended_songs.add((song, artist))
-            st.write(f"'{song}' by {artist}")
-    
-    # Save the 5 recommended songs
-    save_recommendations(recommended_songs)
+            youtube_link = get_youtube_link(song, artist)
+            if youtube_link:
+                st.write(f"'**{song}**' by **{artist}**")
+                st.write(f"[YouTube Link]({youtube_link})")
+                st.divider()
+            else:
+                st.write(f"'**{song}**' by **{artist}**: No YouTube link found")
+                st.divider()
+            count += 1
 
 # Function to display top 5 happy and sad songs
 def top_songs_by_mood(filtered_data):
@@ -115,35 +110,29 @@ def top_songs_by_mood(filtered_data):
     top_happy_songs = happy_songs.sort_values(by=['valence', 'energy'], ascending=False).head(5)
     top_sad_songs = sad_songs.sort_values(by=['valence', 'energy'], ascending=True).head(5)
 
-    st.write("Top 5 Happy Songs:")
+    st.subheader("Top 5 Happy Songs:")
     for index, row in top_happy_songs.iterrows():
         st.write(f"'{row['track_name']}' by {row['track_artist']}")
 
-    st.write("\nTop 5 Sad Songs:")
+    st.subheader("Top 5 Sad Songs:")
     for index, row in top_sad_songs.iterrows():
         st.write(f"'{row['track_name']}' by {row['track_artist']}")
 
-# Streamlit UI
-
+# Streamlit interface
 st.title("Recommend Song Based on Mood😊😔📊")
-st.write("Feeling a type of mood? We dont judge! Input a song of your choice that matches how your feeling and we'll recommend you songs that match the mood of your choice!")
+st.write("Feeling a type of mood? We don't judge! Input a song of your choice that matches how you're feeling, and we'll recommend songs that match the mood!")
 
-# Display saved recommendations
-display_saved_recommendations()
-
-# Display top happy and sad songs
+# Display top 5 happy and sad songs
 if st.button("Show Top 5 Happy and Sad Songs"):
     top_songs_by_mood(filtered_data)
 
 # Get song name and artist name from the user
-st.subheader("Search for Song Recommendations")
-input_song = st.text_input("Enter the song name:")
-input_artist = st.text_input("Enter the artist name:")
+input_song = st.text_input("🎶Enter the song name:")
+input_artist = st.text_input("👩‍🎤Enter the artist name🧑‍🎤:")
 
-if st.button("Recommend Songs"):
-    recommend_song(input_song, input_artist)
-
-# Save filtered data
-filtered_data.to_csv('filtered_spotify_songs.csv', index=False)
-st.write("Filtered data has been saved as 'filtered_spotify_songs.csv'")
-
+# Recommend button functionality
+if st.button("Recommend"):
+    if input_song and input_artist:
+        recommend_song(input_song, input_artist)
+    else:
+        st.error("Please enter both the song name and the artist name.")
