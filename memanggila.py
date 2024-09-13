@@ -70,6 +70,10 @@ def show_top_5_happy_and_sad_songs():
     top_5_sad_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[True, True]).head(10)  # Increase to 10 to handle duplicates
     sad_songs = list(zip(top_5_sad_songs['track_name'], top_5_sad_songs['track_artist']))  # Maintain the list
     
+    # Debug output
+    print("Happy Songs:", happy_songs)
+    print("Sad Songs:", sad_songs)
+    
     # Ensure unique recommendations and limit to 5
     unique_happy_songs = []
     unique_sad_songs = []
@@ -92,6 +96,10 @@ def show_top_5_happy_and_sad_songs():
         for song in sad_songs:
             if len(unique_sad_songs) < 5 and song not in unique_sad_songs:
                 unique_sad_songs.append(song)
+    
+    # Debug output
+    print("Unique Happy Songs:", unique_happy_songs)
+    print("Unique Sad Songs:", unique_sad_songs)
     
     # Display happy and sad songs in a tidy frame
     display_songs_in_frame(unique_happy_songs, "Top 5 Happy Songs 🎉", "#4CAF50")
