@@ -78,7 +78,7 @@ def show_top_5_happy_and_sad_songs():
     show_loading_bar()
     
     # Filter songs with popularity between 80 and 100
-    popular_songs = filtered_data[(filtered_data['track_popularity'] >= 0) & (filtered_data['track_popularity'] <= 100)]
+    popular_songs = filtered_data[(filtered_data['track_popularity'] >= 70) & (filtered_data['track_popularity'] <= 100)]
     
     # Filter top 10 happy songs (high valence, high energy) from the popular songs and sort by popularity
     top_10_happy_songs = popular_songs.sort_values(by=['valence', 'energy', 'track_popularity'], ascending=[False, False, False]).head(10)
