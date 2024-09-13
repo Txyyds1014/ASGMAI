@@ -56,7 +56,7 @@ def display_songs_in_frame(songs, title, border_color):
 # Function to get top 5 happy and sad songs with YouTube links
 def show_top_5_happy_and_sad_songs():
     # Show loading bar
-    show_loading_bar()
+    
     
     # Filter happy songs with popularity between 80 and 100
     happy_songs_filtered = filtered_data[
