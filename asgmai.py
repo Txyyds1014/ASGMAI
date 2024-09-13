@@ -10,7 +10,7 @@ from youtubesearchpython import VideosSearch
 data = pd.read_csv("spotify_songs.csv")
 
 # Select only the required columns
-filtered_data = data[['track_name', 'playlist_subgenre', 'valence', 'energy', 'track_artist']]
+filtered_data = data[['track_name', 'playlist_subgenre', 'valence', 'energy', 'track_artist', 'track_popularity']]
 
 # Drop rows where 'track_name' or 'track_artist' is NaN
 filtered_data = filtered_data.dropna(subset=['track_name', 'track_artist'])
@@ -43,8 +43,8 @@ def display_songs_in_frame(songs, title, border_color):
     with st.container():
         st.markdown(f"<div style='border: 2px solid {border_color}; padding: 10px; border-radius: 10px;'>", unsafe_allow_html=True)
         st.subheader(title)
-        for i, (song, artist) in enumerate(songs):
-            st.write(f"{i+1}. '**{song}**' by **{artist}**")
+        for i, (song, artist, popularity) in enumerate(songs):
+            st.write(f"{i+1}. '**{song}**' by **{artist}** (Popularity: {popularity})")
             youtube_link = get_youtube_link(song, artist)
             if youtube_link:
                 st.write(f"[YouTube Link]({youtube_link})")
@@ -58,13 +58,13 @@ def show_top_5_happy_and_sad_songs():
     # Show loading bar
     show_loading_bar()
     
-    # Filter top 5 happy songs (high valence, high energy)
-    top_5_happy_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[False, False]).head(10)  # Increase to 10 to handle duplicates
-    happy_songs = list(zip(top_5_happy_songs['track_name'], top_5_happy_songs['track_artist']))  # Maintain the list
-    
-    # Filter top 5 sad songs (low valence, low energy)
-    top_5_sad_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[True, True]).head(10)  # Increase to 10 to handle duplicates
-    sad_songs = list(zip(top_5_sad_songs['track_name'], top_5_sad_songs['track_artist']))  # Maintain the list
+    # Filter top 10 happy songs (high valence, high energy) and sort by popularity
+    top_10_happy_songs = filtered_data.sort_values(by=['valence', 'energy', 'track_popularity'], ascending=[False, False, False]).head(10)
+    happy_songs = list(zip(top_10_happy_songs['track_name'], top_10_happy_songs['track_artist'], top_10_happy_songs['track_popularity']))  # Include popularity
+
+    # Filter top 10 sad songs (low valence, low energy) and sort by popularity
+    top_10_sad_songs = filtered_data.sort_values(by=['valence', 'energy', 'track_popularity'], ascending=[True, True, False]).head(10)
+    sad_songs = list(zip(top_10_sad_songs['track_name'], top_10_sad_songs['track_artist'], top_10_sad_songs['track_popularity']))  # Include popularity
     
     # Ensure unique recommendations and limit to 5
     unique_happy_songs = []
@@ -92,7 +92,6 @@ def show_top_5_happy_and_sad_songs():
     # Display happy and sad songs in a tidy frame
     display_songs_in_frame(unique_happy_songs, "Top 5 Happy Songs 🎉", "#4CAF50")
     display_songs_in_frame(unique_sad_songs, "Top 5 Sad Songs 😢", "#FF6347")
-
 
 # Function to search YouTube for a song and return the first video link
 def get_youtube_link(song_name, artist_name):
