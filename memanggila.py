@@ -10,7 +10,7 @@ from youtubesearchpython import VideosSearch
 data = pd.read_csv("spotify_songs.csv")
 
 # Select only the required columns
-filtered_data = data[['track_name', 'playlist_subgenre', 'valence', 'energy', 'track_artist', 'track_popularity']]
+filtered_data = data[['track_name', 'playlist_subgenre', 'valence', 'energy', 'track_artist']]
 
 # Drop rows where 'track_name' or 'track_artist' is NaN
 filtered_data = filtered_data.dropna(subset=['track_name', 'track_artist'])
@@ -31,13 +31,38 @@ features = pd.concat([data_encoded, filtered_data[['valence', 'energy']]], axis=
 knn = NearestNeighbors(n_neighbors=10, metric='euclidean')
 knn.fit(features)
 
-# Function to find the closest matching song using fuzzy matching
-def find_closest_song(song_name, song_list):
-    closest_match = difflib.get_close_matches(song_name, song_list, n=1, cutoff=0.6)  # 60% similarity cutoff
-    if closest_match:
-        return closest_match[0]
-    else:
-        return None
+# Function to display loading with a progress bar
+def show_loading_bar():
+    progress_bar = st.progress(0)
+    for percent_complete in range(100):
+        time.sleep(0.03)
+        progress_bar.progress(percent_complete + 1)
+
+# Function to display songs in a framed format
+def display_songs_in_frame(songs, title, border_color):
+    with st.container():
+        st.markdown(f"<div style='border: 2px solid {border_color}; padding: 10px; border-radius: 10px;'>", unsafe_allow_html=True)
+        st.subheader(title)
+        for i, (song, artist) in enumerate(songs):
+            st.write(f"{i+1}. '**{song}**' by **{artist}**")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# Function to get top 5 happy and sad songs
+def show_top_5_happy_and_sad_songs():
+    # Show loading bar
+    show_loading_bar()
+    
+    # Filter top 5 happy songs (high valence, high energy)
+    top_5_happy_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[False, False]).head(5)
+    happy_songs = list(zip(top_5_happy_songs['track_name'], top_5_happy_songs['track_artist']))
+
+    # Filter top 5 sad songs (low valence, low energy)
+    top_5_sad_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[True, True]).head(5)
+    sad_songs = list(zip(top_5_sad_songs['track_name'], top_5_sad_songs['track_artist']))
+
+    # Display happy and sad songs in a tidy frame
+    display_songs_in_frame(happy_songs, "Top 5 Happy Songs 🎉", "#4CAF50")
+    display_songs_in_frame(sad_songs, "Top 5 Sad Songs 😢", "#FF6347")
 
 # Function to search YouTube for a song and return the first video link
 def get_youtube_link(song_name, artist_name):
@@ -49,68 +74,6 @@ def get_youtube_link(song_name, artist_name):
         return result['result'][0]['link']  # Return the first YouTube video link
     else:
         return None
-
-# Function to display loading with a progress bar
-def show_loading_bar():
-    progress_bar = st.progress(0)
-    for percent_complete in range(100):
-        time.sleep(0.03)
-        progress_bar.progress(percent_complete + 1)
-
-# Function to get top 5 happy and sad songs with YouTube links
-def show_top_5_happy_and_sad_songs():
-    # Show loading bar
-    show_loading_bar()
-    
-    # Filter top 5 happy songs (high valence, high energy)
-    top_5_happy_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[False, False]).head(10)  # Increase to 10 to handle duplicates
-    happy_songs = list(zip(top_5_happy_songs['track_name'], top_5_happy_songs['track_artist']))  # Maintain the list
-    
-    # Filter top 5 sad songs (low valence, low energy)
-    top_5_sad_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[True, True]).head(10)  # Increase to 10 to handle duplicates
-    sad_songs = list(zip(top_5_sad_songs['track_name'], top_5_sad_songs['track_artist']))  # Maintain the list
-    
-    # Debug output
-    print("Happy Songs:", happy_songs)
-    print("Sad Songs:", sad_songs)
-    
-    # Ensure unique recommendations and limit to 5
-    unique_happy_songs = []
-    unique_sad_songs = []
-    
-    for song in happy_songs:
-        if len(unique_happy_songs) < 5 and song not in unique_happy_songs:
-            unique_happy_songs.append(song)
-            
-    for song in sad_songs:
-        if len(unique_sad_songs) < 5 and song not in unique_sad_songs:
-            unique_sad_songs.append(song)
-    
-    # In case there are fewer than 5 unique songs, fill up to 5 with available songs
-    while len(unique_happy_songs) < 5 and len(happy_songs) > len(unique_happy_songs):
-        for song in happy_songs:
-            if len(unique_happy_songs) < 5 and song not in unique_happy_songs:
-                unique_happy_songs.append(song)
-    
-    while len(unique_sad_songs) < 5 and len(sad_songs) > len(unique_sad_songs):
-        for song in sad_songs:
-            if len(unique_sad_songs) < 5 and song not in unique_sad_songs:
-                unique_sad_songs.append(song)
-    
-    # Debug output
-    print("Unique Happy Songs:", unique_happy_songs)
-    print("Unique Sad Songs:", unique_sad_songs)
-    
-    # Display happy and sad songs in a tidy frame
-    display_songs_in_frame(unique_happy_songs, "Top 5 Happy Songs 🎉", "#4CAF50")
-    display_songs_in_frame(unique_sad_songs, "Top 5 Sad Songs 😢", "#FF6347")
-    
-# Helper function to display songs in a frame (you might already have this)
-def display_songs_in_frame(songs, title, color):
-    # Implement your frame display logic here
-    print(f"{title} ({color}):")
-    for song in songs:
-        print(f"- {song[0]} by {song[1]}")
 
 # Song recommendation function
 def recommend_song(song_name, artist_name):
@@ -139,24 +102,22 @@ def recommend_song(song_name, artist_name):
     recommendations = filtered_data.iloc[indices[0]][['track_name', 'track_artist']].values
     with st.spinner('Recommending...'):
         time.sleep(3)
-    
     st.subheader(f"Songs similar to '**{closest_song}**' by **{closest_artist}**:")
     st.divider()
     
     recommended_songs = set()  # Use a set to avoid duplicates
-    count = 0  # Track the number of displayed recommendations
     for rec in recommendations:
         song, artist = rec
-        if song != closest_song and (song, artist) not in recommended_songs and count < 5:  # Limit to 5 songs
+        if song != closest_song and (song, artist) not in recommended_songs:  # Avoid duplicates and the input song
             recommended_songs.add((song, artist))
             youtube_link = get_youtube_link(song, artist)
             if youtube_link:
                 st.write(f"'**{song}**' by **{artist}**")
                 st.write(f"[YouTube Link]({youtube_link})")
+                st.divider()
             else:
                 st.write(f"'**{song}**' by **{artist}**: No YouTube link found")
-            st.divider()
-            count += 1  # Increment count
+                st.divider()
 
 # Streamlit interface
 st.title("Recommend Song Based on Mood 😊😔📊")
@@ -172,6 +133,6 @@ if st.button("Recommend"):
     else:
         st.error("Please enter both the song name and the artist name.")
 
-# Show top happy and sad songs
-if st.button("Show Top Happy and Sad Songs"):
+# Show top 5 happy and sad songs
+if st.button("Show Top 5 Happy and Sad Songs"):
     show_top_5_happy_and_sad_songs()
