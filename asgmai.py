@@ -59,16 +59,40 @@ def show_top_5_happy_and_sad_songs():
     show_loading_bar()
     
     # Filter top 5 happy songs (high valence, high energy)
-    top_5_happy_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[False, False]).head(5)
-    happy_songs = list(set(zip(top_5_happy_songs['track_name'], top_5_happy_songs['track_artist'])))  # Remove duplicates
-
+    top_5_happy_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[False, False]).head(10)  # Increase to 10 to handle duplicates
+    happy_songs = list(zip(top_5_happy_songs['track_name'], top_5_happy_songs['track_artist']))  # Maintain the list
+    
     # Filter top 5 sad songs (low valence, low energy)
-    top_5_sad_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[True, True]).head(5)
-    sad_songs = list(set(zip(top_5_sad_songs['track_name'], top_5_sad_songs['track_artist'])))  # Remove duplicates
-
+    top_5_sad_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[True, True]).head(10)  # Increase to 10 to handle duplicates
+    sad_songs = list(zip(top_5_sad_songs['track_name'], top_5_sad_songs['track_artist']))  # Maintain the list
+    
+    # Ensure unique recommendations and limit to 5
+    unique_happy_songs = []
+    unique_sad_songs = []
+    
+    for song in happy_songs:
+        if len(unique_happy_songs) < 5 and song not in unique_happy_songs:
+            unique_happy_songs.append(song)
+            
+    for song in sad_songs:
+        if len(unique_sad_songs) < 5 and song not in unique_sad_songs:
+            unique_sad_songs.append(song)
+    
+    # In case there are fewer than 5 unique songs, fill up to 5 with available songs
+    while len(unique_happy_songs) < 5 and len(happy_songs) > len(unique_happy_songs):
+        for song in happy_songs:
+            if len(unique_happy_songs) < 5 and song not in unique_happy_songs:
+                unique_happy_songs.append(song)
+    
+    while len(unique_sad_songs) < 5 and len(sad_songs) > len(unique_sad_songs):
+        for song in sad_songs:
+            if len(unique_sad_songs) < 5 and song not in unique_sad_songs:
+                unique_sad_songs.append(song)
+    
     # Display happy and sad songs in a tidy frame
-    display_songs_in_frame(happy_songs, "Top 5 Happy Songs 🎉", "#4CAF50")
-    display_songs_in_frame(sad_songs, "Top 5 Sad Songs 😢", "#FF6347")
+    display_songs_in_frame(unique_happy_songs, "Top 5 Happy Songs 🎉", "#4CAF50")
+    display_songs_in_frame(unique_sad_songs, "Top 5 Sad Songs 😢", "#FF6347")
+
 
 # Function to search YouTube for a song and return the first video link
 def get_youtube_link(song_name, artist_name):
