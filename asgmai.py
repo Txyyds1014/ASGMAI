@@ -38,31 +38,55 @@ def show_loading_bar():
         time.sleep(0.03)
         progress_bar.progress(percent_complete + 1)
 
-# Function to display songs in a framed format
+# Function to display songs in a framed format with YouTube links
 def display_songs_in_frame(songs, title, border_color):
     with st.container():
         st.markdown(f"<div style='border: 2px solid {border_color}; padding: 10px; border-radius: 10px;'>", unsafe_allow_html=True)
         st.subheader(title)
         for i, (song, artist) in enumerate(songs):
             st.write(f"{i+1}. '**{song}**' by **{artist}**")
+            youtube_link = get_youtube_link(song, artist)
+            if youtube_link:
+                st.write(f"[YouTube Link]({youtube_link})")
+            else:
+                st.write("No YouTube link found")
+            st.divider()
         st.markdown("</div>", unsafe_allow_html=True)
 
-# Function to get top 5 happy and sad songs
+# Function to get top 5 happy and sad songs with YouTube links
 def show_top_5_happy_and_sad_songs():
     # Show loading bar
     show_loading_bar()
     
     # Filter top 5 happy songs (high valence, high energy)
     top_5_happy_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[False, False]).head(5)
-    happy_songs = list(zip(top_5_happy_songs['track_name'], top_5_happy_songs['track_artist']))
+    happy_songs = list(set(zip(top_5_happy_songs['track_name'], top_5_happy_songs['track_artist'])))  # Remove duplicates
 
     # Filter top 5 sad songs (low valence, low energy)
     top_5_sad_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[True, True]).head(5)
-    sad_songs = list(zip(top_5_sad_songs['track_name'], top_5_sad_songs['track_artist']))
+    sad_songs = list(set(zip(top_5_sad_songs['track_name'], top_5_sad_songs['track_artist'])))  # Remove duplicates
 
     # Display happy and sad songs in a tidy frame
     display_songs_in_frame(happy_songs, "Top 5 Happy Songs 🎉", "#4CAF50")
     display_songs_in_frame(sad_songs, "Top 5 Sad Songs 😢", "#FF6347")
+
+# Streamlit interface
+st.title("Recommend Song Based on Mood 😊😔📊")
+st.write("Feeling a type of mood? Input a song of your choice and we'll recommend similar songs that match the mood!")
+
+# Get song name and artist name from the user
+input_song = st.text_input("🎶Enter the song name:")
+input_artist = st.text_input("👩‍🎤Enter the artist name🧑‍🎤:")
+
+if st.button("Recommend"):
+    if input_song and input_artist:
+        recommend_song(input_song, input_artist)
+    else:
+        st.error("Please enter both the song name and the artist name.")
+
+# Show top 5 happy and sad songs
+if st.button("Show Top 5 Happy and Sad Songs"):
+    show_top_5_happy_and_sad_songs()
 
 # Function to search YouTube for a song and return the first video link
 def get_youtube_link(song_name, artist_name):
