@@ -56,27 +56,15 @@ def display_songs_in_frame(songs, title, border_color):
 # Function to get top 5 happy and sad songs with YouTube links
 def show_top_5_happy_and_sad_songs():
     # Show loading bar
+    show_loading_bar()
     
-    
-    # Filter happy songs with popularity between 80 and 100
-    happy_songs_filtered = filtered_data[
-        (filtered_data['valence'] > 0.5) &
-        (filtered_data['energy'] > 0.5) &
-        (filtered_data['track_popularity'] >= 0) &
-        (filtered_data['track_popularity'] <= 100)
-    ]
-    top_5_happy_songs = happy_songs_filtered.sort_values(by='track_popularity', ascending=False).head(10)  # Increase to 10 to handle duplicates
-    happy_songs = list(zip(top_5_happy_songs['track_name'], top_5_happy_songs['track_artist'], top_5_happy_songs['track_popularity']))  # Include popularity
+    # Filter top 10 happy songs (high valence, high energy) and sort by popularity
+    top_10_happy_songs = filtered_data.sort_values(by=['valence', 'energy', 'track_popularity'], ascending=[False, False, False]).head(10)
+    happy_songs = list(zip(top_10_happy_songs['track_name'], top_10_happy_songs['track_artist'], top_10_happy_songs['track_popularity']))  # Include popularity
 
-    # Filter sad songs with popularity between 80 and 100
-    sad_songs_filtered = filtered_data[
-        (filtered_data['valence'] <= 0.5) &
-        (filtered_data['energy'] <= 0.5) &
-        (filtered_data['track_popularity'] >= 0) &
-        (filtered_data['track_popularity'] <= 100)
-    ]
-    top_5_sad_songs = sad_songs_filtered.sort_values(by='track_popularity', ascending=False).head(10)  # Increase to 10 to handle duplicates
-    sad_songs = list(zip(top_5_sad_songs['track_name'], top_5_sad_songs['track_artist'], top_5_sad_songs['track_popularity']))  # Include popularity
+    # Filter top 10 sad songs (low valence, low energy) and sort by popularity
+    top_10_sad_songs = filtered_data.sort_values(by=['valence', 'energy', 'track_popularity'], ascending=[True, True, False]).head(10)
+    sad_songs = list(zip(top_10_sad_songs['track_name'], top_10_sad_songs['track_artist'], top_10_sad_songs['track_popularity']))  # Include popularity
     
     # Ensure unique recommendations and limit to 5
     unique_happy_songs = []
