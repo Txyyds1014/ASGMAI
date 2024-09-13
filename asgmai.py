@@ -31,6 +31,25 @@ features = pd.concat([data_encoded, filtered_data[['valence', 'energy']]], axis=
 knn = NearestNeighbors(n_neighbors=10, metric='euclidean')
 knn.fit(features)
 
+# Function to find the closest matching song using fuzzy matching
+def find_closest_song(song_name, song_list):
+    closest_match = difflib.get_close_matches(song_name, song_list, n=1, cutoff=0.6)  # 60% similarity cutoff
+    if closest_match:
+        return closest_match[0]
+    else:
+        return None
+
+# Function to search YouTube for a song and return the first video link
+def get_youtube_link(song_name, artist_name):
+    search_query = f"{song_name} {artist_name} official"
+    videos_search = VideosSearch(search_query, limit=1)
+    result = videos_search.result()
+    
+    if result['result']:
+        return result['result'][0]['link']  # Return the first YouTube video link
+    else:
+        return None
+
 # Function to display loading with a progress bar
 def show_loading_bar():
     progress_bar = st.progress(0)
