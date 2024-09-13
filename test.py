@@ -67,7 +67,7 @@ def show_top_5_happy_and_sad_songs():
     # Display happy songs with YouTube links
     with st.container():
         st.markdown(f"<div style='border: 2px solid #4CAF50; padding: 10px; border-radius: 10px;'>", unsafe_allow_html=True)
-        st.subheader("Top 5 Happy Songs 🎉")
+        st.subheader("Top 5 Motivation Songs 🎉")
         for i, (song, artist) in enumerate(happy_songs):
             youtube_link = get_youtube_link(song, artist)
             if youtube_link:
@@ -79,7 +79,7 @@ def show_top_5_happy_and_sad_songs():
     # Display sad songs with YouTube links
     with st.container():
         st.markdown(f"<div style='border: 2px solid #FF6347; padding: 10px; border-radius: 10px;'>", unsafe_allow_html=True)
-        st.subheader("Top 5 Sad Songs 😢")
+        st.subheader("Top 5 Demotivation Songs 😢")
         for i, (song, artist) in enumerate(sad_songs):
             youtube_link = get_youtube_link(song, artist)
             if youtube_link:
