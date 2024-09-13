@@ -166,4 +166,4 @@ if st.button("Recommend"):
 
 # Show top happy and sad songs
 if st.button("Show Top Happy and Sad Songs"):
-    show_top_happy_and_sad_songs()
+    show_top_5_happy_and_sad_songs()
