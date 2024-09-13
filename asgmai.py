@@ -125,7 +125,8 @@ def top_songs_by_mood(filtered_data):
 
 # Streamlit UI
 
-st.title("Spotify Song Recommender System")
+st.title("Recommend Song Based on Mood😊😔📊")
+st.write("Feeling a type of mood? We dont judge! Input a song of your choice that matches how your feeling and we'll recommend you songs that match the mood of your choice!")
 
 # Display saved recommendations
 display_saved_recommendations()
