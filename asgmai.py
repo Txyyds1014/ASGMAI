@@ -70,24 +70,6 @@ def show_top_5_happy_and_sad_songs():
     display_songs_in_frame(happy_songs, "Top 5 Happy Songs 🎉", "#4CAF50")
     display_songs_in_frame(sad_songs, "Top 5 Sad Songs 😢", "#FF6347")
 
-# Streamlit interface
-st.title("Recommend Song Based on Mood 😊😔📊")
-st.write("Feeling a type of mood? Input a song of your choice and we'll recommend similar songs that match the mood!")
-
-# Get song name and artist name from the user
-input_song = st.text_input("🎶Enter the song name:")
-input_artist = st.text_input("👩‍🎤Enter the artist name🧑‍🎤:")
-
-if st.button("Recommend"):
-    if input_song and input_artist:
-        recommend_song(input_song, input_artist)
-    else:
-        st.error("Please enter both the song name and the artist name.")
-
-# Show top 5 happy and sad songs
-if st.button("Show Top 5 Happy and Sad Songs"):
-    show_top_5_happy_and_sad_songs()
-
 # Function to search YouTube for a song and return the first video link
 def get_youtube_link(song_name, artist_name):
     search_query = f"{song_name} {artist_name} official"
