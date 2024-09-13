@@ -122,8 +122,20 @@ def top_songs_by_mood(filtered_data):
 st.title("Recommend Song Based on Mood😊😔📊")
 st.write("Feeling a type of mood? We don't judge! Input a song of your choice that matches how you're feeling, and we'll recommend songs that match the mood!")
 
-# Display top 5 happy and sad songs
-if st.button("Show Top 5 Happy and Sad Songs"):
+# Initialize session state for showing/hiding top 5 songs
+if 'show_top_songs' not in st.session_state:
+    st.session_state.show_top_songs = False
+
+# Button to toggle showing or hiding top 5 songs
+if st.session_state.show_top_songs:
+    if st.button("Close Top 5 Songs"):
+        st.session_state.show_top_songs = False
+else:
+    if st.button("Show Top 5 Happy and Sad Songs"):
+        st.session_state.show_top_songs = True
+
+# Show top 5 songs when the toggle is active
+if st.session_state.show_top_songs:
     top_songs_by_mood(filtered_data)
 
 # Get song name and artist name from the user
