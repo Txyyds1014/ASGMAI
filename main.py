@@ -57,60 +57,31 @@ def show_loading_bar():
         time.sleep(0.03)
         progress_bar.progress(percent_complete + 1)
 
-# Function to display songs in a framed format with YouTube links
-def display_songs_in_frame(songs, title, border_color):
-    with st.container():
-        st.markdown(f"<div style='border: 2px solid {border_color}; padding: 10px; border-radius: 10px;'>", unsafe_allow_html=True)
-        st.subheader(title)
-        for i, (song, artist, popularity) in enumerate(songs):
-            st.write(f"{i+1}. '**{song}**' by **{artist}** (Popularity: {popularity})")
-            youtube_link = get_youtube_link(song, artist)
-            if youtube_link:
-                st.write(f"[YouTube Link]({youtube_link})")
-            else:
-                st.write("No YouTube link found")
-            st.divider()
-        st.markdown("</div>", unsafe_allow_html=True)
-
-# Function to get top 5 happy and sad songs with YouTube links
-def show_top_5_happy_and_sad_songs():
+# Function to get the happy song with the highest energy and the sad song with the lowest energy with YouTube links
+def show_top_happy_and_sad_songs():
     # Show loading bar
     show_loading_bar()
     
-    # Filter top 5 happy songs (high valence, high energy)
-    top_5_happy_songs = filtered_data.sort_values(by=['energy'], ascending=[False]).head(10)  # Increase to 10 to handle duplicates
-    happy_songs = list(zip(top_5_happy_songs['track_name'], top_5_happy_songs['track_artist']))  # Maintain the list
+    # Filter the happy song with the highest energy
+    happy_song = filtered_data[filtered_data['valence'] > 0].sort_values(by='energy', ascending=False).head(1)
+    happy_song_info = (happy_song['track_name'].values[0], happy_song['track_artist'].values[0]) if not happy_song.empty else None
     
-    # Filter top 5 sad songs (low valence, low energy)
-    top_5_sad_songs = filtered_data.sort_values(by=['energy'], ascending=[True]).head(10)  # Increase to 10 to handle duplicates
-    sad_songs = list(zip(top_5_sad_songs['track_name'], top_5_sad_songs['track_artist']))  # Maintain the list
-    
-    # Ensure unique recommendations and limit to 5
-    unique_happy_songs = []
-    unique_sad_songs = []
-    
-    for song in happy_songs:
-        if len(unique_happy_songs) < 5 and song not in unique_happy_songs:
-            unique_happy_songs.append(song)
-            
-    for song in sad_songs:
-        if len(unique_sad_songs) < 5 and song not in unique_sad_songs:
-            unique_sad_songs.append(song)
-    
-    # In case there are fewer than 5 unique songs, fill up to 5 with available songs
-    while len(unique_happy_songs) < 5 and len(happy_songs) > len(unique_happy_songs):
-        for song in happy_songs:
-            if len(unique_happy_songs) < 5 and song not in unique_happy_songs:
-                unique_happy_songs.append(song)
-    
-    while len(unique_sad_songs) < 5 and len(sad_songs) > len(unique_sad_songs):
-        for song in sad_songs:
-            if len(unique_sad_songs) < 5 and song not in unique_sad_songs:
-                unique_sad_songs.append(song)
+    # Filter the sad song with the lowest energy
+    sad_song = filtered_data[filtered_data['valence'] <= 0].sort_values(by='energy', ascending=True).head(1)
+    sad_song_info = (sad_song['track_name'].values[0], sad_song['track_artist'].values[0]) if not sad_song.empty else None
     
     # Display happy and sad songs in a tidy frame
-    display_songs_in_frame(unique_happy_songs, "Top 5 Happy Songs 🎉", "#4CAF50")
-    display_songs_in_frame(unique_sad_songs, "Top 5 Sad Songs 😢", "#FF6347")
+    if happy_song_info:
+        display_songs_in_frame([happy_song_info], "Top Happy Song 🎉", "#4CAF50")
+    if sad_song_info:
+        display_songs_in_frame([sad_song_info], "Top Sad Song 😢", "#FF6347")
+
+# Helper function to display songs in a frame (you might already have this)
+def display_songs_in_frame(songs, title, color):
+    # Implement your frame display logic here
+    print(f"{title} ({color}):")
+    for song in songs:
+        print(f"- {song[0]} by {song[1]}")
 
 # Song recommendation function
 def recommend_song(song_name, artist_name):
