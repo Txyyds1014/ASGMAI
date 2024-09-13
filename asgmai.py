@@ -102,22 +102,24 @@ def recommend_song(song_name, artist_name):
     recommendations = filtered_data.iloc[indices[0]][['track_name', 'track_artist']].values
     with st.spinner('Recommending...'):
         time.sleep(3)
+    
     st.subheader(f"Songs similar to '**{closest_song}**' by **{closest_artist}**:")
     st.divider()
     
     recommended_songs = set()  # Use a set to avoid duplicates
+    count = 0  # Track the number of displayed recommendations
     for rec in recommendations:
         song, artist = rec
-        if song != closest_song and (song, artist) not in recommended_songs:  # Avoid duplicates and the input song
+        if song != closest_song and (song, artist) not in recommended_songs and count < 5:  # Limit to 5 songs
             recommended_songs.add((song, artist))
             youtube_link = get_youtube_link(song, artist)
             if youtube_link:
                 st.write(f"'**{song}**' by **{artist}**")
                 st.write(f"[YouTube Link]({youtube_link})")
-                st.divider()
             else:
                 st.write(f"'**{song}**' by **{artist}**: No YouTube link found")
-                st.divider()
+            st.divider()
+            count += 1  # Increment count
 
 # Streamlit interface
 st.title("Recommend Song Based on Mood 😊😔📊")
