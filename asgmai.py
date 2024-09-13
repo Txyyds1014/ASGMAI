@@ -77,12 +77,15 @@ def show_top_5_happy_and_sad_songs():
     # Show loading bar
     show_loading_bar()
     
-    # Filter top 10 happy songs (high valence, high energy) and sort by popularity
-    top_10_happy_songs = filtered_data.sort_values(by=['valence', 'energy', 'track_popularity'], ascending=[False, False, False]).head(10)
+    # Filter songs with popularity between 80 and 100
+    popular_songs = filtered_data[(filtered_data['track_popularity'] >= 80) & (filtered_data['track_popularity'] <= 100)]
+    
+    # Filter top 10 happy songs (high valence, high energy) from the popular songs and sort by popularity
+    top_10_happy_songs = popular_songs.sort_values(by=['valence', 'energy', 'track_popularity'], ascending=[False, False, False]).head(10)
     happy_songs = list(zip(top_10_happy_songs['track_name'], top_10_happy_songs['track_artist'], top_10_happy_songs['track_popularity']))  # Include popularity
 
-    # Filter top 10 sad songs (low valence, low energy) and sort by popularity
-    top_10_sad_songs = filtered_data.sort_values(by=['valence', 'energy', 'track_popularity'], ascending=[True, True, False]).head(10)
+    # Filter top 10 sad songs (low valence, low energy) from the popular songs and sort by popularity
+    top_10_sad_songs = popular_songs.sort_values(by=['valence', 'energy', 'track_popularity'], ascending=[True, True, False]).head(10)
     sad_songs = list(zip(top_10_sad_songs['track_name'], top_10_sad_songs['track_artist'], top_10_sad_songs['track_popularity']))  # Include popularity
     
     # Ensure unique recommendations and limit to 5
@@ -111,6 +114,7 @@ def show_top_5_happy_and_sad_songs():
     # Display happy and sad songs in a tidy frame
     display_songs_in_frame(unique_happy_songs, "Top 5 Happy Songs 🎉", "#4CAF50")
     display_songs_in_frame(unique_sad_songs, "Top 5 Sad Songs 😢", "#FF6347")
+
 
 # Song recommendation function
 def recommend_song(song_name, artist_name):
