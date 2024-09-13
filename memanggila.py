@@ -47,17 +47,21 @@ def display_songs_in_frame(songs, title, border_color):
             st.write(f"{i+1}. '**{song}**' by **{artist}**")
         st.markdown("</div>", unsafe_allow_html=True)
 
-# Function to get top 5 happy and sad songs
+# Function to get top 5 happy and sad songs with no duplication
 def show_top_5_happy_and_sad_songs():
     # Show loading bar
     show_loading_bar()
-    
-    # Filter top 5 happy songs (high valence, high energy)
-    top_5_happy_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[False, False]).head(5)
+
+    # Sort by valence and energy for happy and sad songs
+    sorted_data = filtered_data.sort_values(by=['valence', 'energy'], ascending=[False, False])
+
+    # Filter top 5 happy songs (high valence, high energy) ensuring no duplicates
+    top_5_happy_songs = sorted_data.drop_duplicates(subset=['track_name']).head(5)
     happy_songs = list(zip(top_5_happy_songs['track_name'], top_5_happy_songs['track_artist']))
 
-    # Filter top 5 sad songs (low valence, low energy)
-    top_5_sad_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[True, True]).head(5)
+    # Filter top 5 sad songs (low valence, low energy), ensuring no duplicates with happy songs
+    sorted_data_sad = filtered_data.sort_values(by=['valence', 'energy'], ascending=[True, True])
+    top_5_sad_songs = sorted_data_sad[~sorted_data_sad['track_name'].isin(top_5_happy_songs['track_name'])].drop_duplicates(subset=['track_name']).head(5)
     sad_songs = list(zip(top_5_sad_songs['track_name'], top_5_sad_songs['track_artist']))
 
     # Display happy and sad songs in a tidy frame
