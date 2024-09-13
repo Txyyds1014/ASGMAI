@@ -4,10 +4,7 @@ import time
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler
-import difflib
-from youtubesearchpython import VideosSearch
 import joblib
-import os
 
 # Load the dataset
 data = pd.read_csv("spotify_songs.csv")
@@ -41,10 +38,10 @@ def show_loading_bar():
         time.sleep(0.03)
         progress_bar.progress(percent_complete + 1)
 
-# Function to display songs in a framed format
-def display_songs_in_frame(songs, title):
+# Function to display songs in a framed format with green or red frames
+def display_songs_in_frame(songs, title, frame_color):
     with st.container():
-        st.markdown(f"<div style='border: 2px solid #4CAF50; padding: 10px; border-radius: 10px;'>", unsafe_allow_html=True)
+        st.markdown(f"<div style='border: 2px solid {frame_color}; padding: 10px; border-radius: 10px;'>", unsafe_allow_html=True)
         st.subheader(title)
         for i, (song, artist) in enumerate(songs):
             st.write(f"{i+1}. '**{song}**' by **{artist}**")
@@ -54,7 +51,7 @@ def display_songs_in_frame(songs, title):
 def show_top_5_happy_and_sad_songs():
     # Show loading bar
     show_loading_bar()
-    
+
     # Filter top 5 happy songs (high valence, high energy)
     top_5_happy_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[False, False]).head(5)
     happy_songs = list(zip(top_5_happy_songs['track_name'], top_5_happy_songs['track_artist']))
@@ -63,9 +60,9 @@ def show_top_5_happy_and_sad_songs():
     top_5_sad_songs = filtered_data.sort_values(by=['valence', 'energy'], ascending=[True, True]).head(5)
     sad_songs = list(zip(top_5_sad_songs['track_name'], top_5_sad_songs['track_artist']))
 
-    # Display happy and sad songs in a tidy frame
-    display_songs_in_frame(happy_songs, "Top 5 Happy Songs 🎉")
-    display_songs_in_frame(sad_songs, "Top 5 Sad Songs 😢")
+    # Display happy and sad songs with different colored frames
+    display_songs_in_frame(happy_songs, "Top 5 Happy Songs 🎉", "#4CAF50")  # Green frame for happy songs
+    display_songs_in_frame(sad_songs, "Top 5 Sad Songs 😢", "#FF6347")  # Red frame for sad songs
 
 # Song recommendation function
 def recommend_song(song_name, artist_name):
@@ -97,18 +94,16 @@ def recommend_song(song_name, artist_name):
         song, artist = rec
         if song != closest_song and (song, artist) not in recommended_songs:
             recommended_songs.add((song, artist))
-            youtube_link = get_youtube_link(song, artist)
-            if youtube_link:
-                st.write(f"'**{song}**' by **{artist}**")
-                st.write(f"[YouTube Link]({youtube_link})")
-                st.divider()
+            # Here you can add YouTube link retrieval logic if needed.
+            st.write(f"'**{song}**' by **{artist}**")
+            st.divider()
 
 # Streamlit interface
 st.title("Recommend Song Based on Mood 😊😔📊")
 st.write("Feeling a type of mood? Input a song of your choice and we'll recommend similar songs that match the mood!")
 
-input_song = st.text_input("🎶Enter the song name:")
-input_artist = st.text_input("👩‍🎤Enter the artist name🧑‍🎤:")
+input_song = st.text_input("🎶 Enter the song name:")
+input_artist = st.text_input("👩‍🎤 Enter the artist name 🧑‍🎤:")
 
 if st.button("Recommend"):
     if input_song and input_artist:
