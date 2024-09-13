@@ -62,7 +62,7 @@ def show_top_5_happy_and_sad_songs():
     happy_songs_filtered = filtered_data[
         (filtered_data['valence'] > 0.5) &
         (filtered_data['energy'] > 0.5) &
-        (filtered_data['track_popularity'] >= 80) &
+        (filtered_data['track_popularity'] >= 0) &
         (filtered_data['track_popularity'] <= 100)
     ]
     top_5_happy_songs = happy_songs_filtered.sort_values(by='track_popularity', ascending=False).head(10)  # Increase to 10 to handle duplicates
@@ -72,7 +72,7 @@ def show_top_5_happy_and_sad_songs():
     sad_songs_filtered = filtered_data[
         (filtered_data['valence'] <= 0.5) &
         (filtered_data['energy'] <= 0.5) &
-        (filtered_data['track_popularity'] >= 80) &
+        (filtered_data['track_popularity'] >= 0) &
         (filtered_data['track_popularity'] <= 100)
     ]
     top_5_sad_songs = sad_songs_filtered.sort_values(by='track_popularity', ascending=False).head(10)  # Increase to 10 to handle duplicates
