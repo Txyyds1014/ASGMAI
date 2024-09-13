@@ -66,6 +66,7 @@ def show_top_5_happy_and_sad_songs():
 
 # Song recommendation function
 def recommend_song(song_name, artist_name):
+    # Find the closest matching song and artist in the dataset
     closest_song_row = filtered_data[
         (filtered_data['track_name'].str.contains(song_name, case=False)) &
         (filtered_data['track_artist'].str.contains(artist_name, case=False))
@@ -73,30 +74,43 @@ def recommend_song(song_name, artist_name):
     
     if closest_song_row.empty:
         st.error("No similar songs in database")
+        #st.write(f"No close match found for '{song_name}' by '{artist_name}' in the dataset.")
         return
     else:
+        # Extract the closest match details
         closest_song = closest_song_row['track_name'].values[0]
         closest_artist = closest_song_row['track_artist'].values[0]
         st.success(f"Closest match found: '**{closest_song}**' by **{closest_artist}**")
+        #st.write(f"Closest match found: '{closest_song}' by {closest_artist}")
     
+    # Extract the features of the closest matching song
     input_features = features[filtered_data['track_name'] == closest_song]
     
+    # Find the nearest neighbors
     distances, indices = knn.kneighbors(input_features)
     
+    # Retrieve the recommended songs and artists, excluding the input song
     recommendations = filtered_data.iloc[indices[0]][['track_name', 'track_artist']].values
     with st.spinner('Recommending...'):
-        time.sleep(2)
+        time.sleep(3)
     st.subheader(f"Songs similar to '**{closest_song}**' by **{closest_artist}**:")
     st.divider()
     
-    recommended_songs = set()
-    for rec in recommendations[:5]:  # Recommend only top 5
+    recommended_songs = set()  # Use a set to avoid duplicates
+    for rec in recommendations:
         song, artist = rec
-        if song != closest_song and (song, artist) not in recommended_songs:
+        if song != closest_song and (song, artist) not in recommended_songs:  # Avoid duplicates and the input song
             recommended_songs.add((song, artist))
-            # Here you can add YouTube link retrieval logic if needed.
-            st.write(f"'**{song}**' by **{artist}**")
-            st.divider()
+            youtube_link = get_youtube_link(song, artist)
+            if youtube_link:
+                st.write(f"'**{song}**' by **{artist}**")
+                st.write(f"[YouTube Link]({youtube_link})")
+                st.divider()
+            else:
+                st.write(f"'**{song}**' by **{artist}**: No YouTube link found")
+                st.divider()
+
+
 
 # Streamlit interface
 st.title("Recommend Song Based on Mood 😊😔📊")
