@@ -121,7 +121,7 @@ def recommend_song(song_name, artist_name):
 
 # Streamlit interface
 st.title("Recommend Song Based on Mood 😊😔📊")
-st.write("Feeling a type of mood? Input a song of your choice and we'll recommend similar songs that match the mood!")
+st.write("Feeling a type of mood? We dont judge! Input a song of your choice that matches how your feeling and we'll recommend you songs that match the mood of your choice!")
 
 # Get song name and artist name from the user
 input_song = st.text_input("🎶Enter the song name:")
