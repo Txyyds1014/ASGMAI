@@ -134,5 +134,5 @@ if st.button("Recommend"):
         st.error("Please enter both the song name and the artist name.")
 
 # Show top 5 happy and sad songs
-if st.button("Show Top 5 Happy and Sad Songs"):
+if st.button("Recommend 5 Happy and Sad Songs"):
     show_top_5_happy_and_sad_songs()
